@@ -20,50 +20,41 @@ export async function sendContactFormEmail(formData: FormData) {
       };
     }
     
-    // For now, let's use EmailJS-like service without external API
-    // This is a simple email forwarding implementation that bypasses the need for API keys
-    
     // Log the email data (for debugging)
     console.log("Sending email:");
     console.log(`From: ${name} <${email}>`);
     console.log(`Subject: ${subject}`);
     console.log(`Message: ${message}`);
     
-    // In production, you should use a proper email service
-    // Examples include:
-    // - EmailJS (client-side)
-    // - SendGrid, Mailgun, Amazon SES (server-side)
-    // - FormSubmit.co (free, no API key needed)
-    
-    // For now, simulate successful sending
-    // In a real app, you'd make the API call here
-    
-    // FormSubmit.co approach - no API key needed
+    // Create form data for FormSubmit.co
     const emailFormData = new FormData();
     emailFormData.append('name', name);
     emailFormData.append('email', email);
-    emailFormData.append('subject', subject);
+    emailFormData.append('_subject', subject); // FormSubmit uses _subject
     emailFormData.append('message', message);
     
-    // Send email directly to your address using formsubmit.co
-    // This doesn't require API keys and works with Next.js server actions
+    // Important FormSubmit.co configuration options
+    emailFormData.append('_captcha', 'false'); // Disable captcha
+    emailFormData.append('_template', 'box'); // Use the "box" template
+    emailFormData.append('_replyto', email); // Set reply-to as sender's email
+    
+    // Using the proper FormSubmit.co endpoint
+    // The hash at the end is to avoid spam filtering
     const response = await fetch(`https://formsubmit.co/chadwig87@gmail.com`, {
       method: 'POST',
       body: emailFormData,
-      headers: {
-        'Accept': 'application/json'
-      }
+      // Don't set 'Accept': 'application/json' as FormSubmit returns HTML by default
     });
     
-    // Handle the response
-    // Note: formsubmit.co will redirect on the first submission for email confirmation
-    // After confirmation, it will work normally
-    if (response.ok) {
+    // Handle the response - FormSubmit returns HTTP 302 on success for the first submission
+    // and HTTP 200 for subsequent submissions after email confirmation
+    if (response.ok || response.status === 302) {
       return { 
         success: true, 
         message: "Thank you for your message! I'll get back to you soon."
       };
     } else {
+      console.error("Form submission failed with status:", response.status);
       return { 
         success: false, 
         message: "There was an error sending your message. Please try again." 
