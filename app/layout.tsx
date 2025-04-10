@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { ThemeProvider } from "@/components/theme-provider"
 import './globals.css'
 
@@ -6,7 +6,12 @@ export const metadata: Metadata = {
   title: 'Data Analyst Portfolio',
   description: 'Data visualization expert portfolio',
   generator: 'v0.dev',
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default function RootLayout({
