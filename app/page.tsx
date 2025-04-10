@@ -19,12 +19,20 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { sendContactFormEmail } from "./actions"
+import { toast } from "@/components/ui/use-toast"
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home")
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [formStatus, setFormStatus] = useState<{
+    success?: boolean;
+    message?: string;
+    isSubmitting?: boolean;
+  }>({})
   const sections = ["home", "about", "skills", "portfolio", "contact"]
   const observerRefs = useRef<IntersectionObserver[]>([])
+  const formRef = useRef<HTMLFormElement>(null)
 
   useEffect(() => {
     const sectionElements = sections.map((section) =>
@@ -52,6 +60,49 @@ export default function Home() {
       })
     }
   }, [])
+
+  // Contact form submission handler
+  async function handleContactFormSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormStatus({ isSubmitting: true });
+    
+    try {
+      const formData = new FormData(event.currentTarget);
+      const result = await sendContactFormEmail(formData);
+      
+      setFormStatus({
+        success: result.success,
+        message: result.message,
+        isSubmitting: false
+      });
+      
+      // Show toast notification
+      toast({
+        title: result.success ? "Message Sent" : "Error",
+        description: result.message,
+        variant: result.success ? "default" : "destructive",
+      });
+      
+      // Clear form if successful
+      if (result.success && formRef.current) {
+        formRef.current.reset();
+      }
+    } catch (error) {
+      console.error("Form submission error:", error);
+      setFormStatus({
+        success: false,
+        message: "There was an error sending your message. Please try again.",
+        isSubmitting: false
+      });
+      
+      // Show error toast
+      toast({
+        title: "Error",
+        description: "There was an error sending your message. Please try again.",
+        variant: "destructive",
+      });
+    }
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-black text-white">
@@ -836,7 +887,7 @@ export default function Home() {
                   className="rounded-2xl border border-white/10 bg-white/5 p-8"
                 >
                   <h3 className="mb-6 text-2xl font-bold">Send Me a Message</h3>
-                  <form className="space-y-4">
+                  <form ref={formRef} onSubmit={handleContactFormSubmit} className="space-y-4">
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <label htmlFor="name" className="text-sm font-medium">
@@ -844,6 +895,8 @@ export default function Home() {
                         </label>
                         <input
                           id="name"
+                          name="name"
+                          required
                           className="w-full rounded-md border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/50 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                           placeholder="Your name"
                         />
@@ -854,7 +907,9 @@ export default function Home() {
                         </label>
                         <input
                           id="email"
+                          name="email"
                           type="email"
+                          required
                           className="w-full rounded-md border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/50 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                           placeholder="Your email"
                         />
@@ -866,6 +921,8 @@ export default function Home() {
                       </label>
                       <input
                         id="subject"
+                        name="subject"
+                        required
                         className="w-full rounded-md border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/50 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         placeholder="Subject"
                       />
@@ -876,12 +933,25 @@ export default function Home() {
                       </label>
                       <textarea
                         id="message"
+                        name="message"
                         rows={5}
+                        required
                         className="w-full rounded-md border border-white/10 bg-white/5 px-4 py-2 text-white placeholder:text-white/50 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
                         placeholder="Your message"
                       />
                     </div>
-                    <Button className="w-full bg-emerald-500 text-black hover:bg-emerald-600">Send Message</Button>
+                    {formStatus.message && (
+                      <div className={`p-3 rounded-md ${formStatus.success ? 'bg-emerald-500/20 text-emerald-200' : 'bg-red-500/20 text-red-200'}`}>
+                        {formStatus.message}
+                      </div>
+                    )}
+                    <Button 
+                      type="submit" 
+                      disabled={formStatus.isSubmitting}
+                      className="w-full bg-emerald-500 text-black hover:bg-emerald-600 disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {formStatus.isSubmitting ? "Sending..." : "Send Message"}
+                    </Button>
                   </form>
                 </motion.div>
               </div>
