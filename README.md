@@ -31,7 +31,7 @@ A modern, responsive portfolio website showcasing data analysis and visualizatio
 
 1. Clone the repository
    ```
-   git clone https://github.com/yourusername/data-analyst-portfolio.git
+   git clone https://github.com/ChadwigOtieno/Portfolio.git
    ```
 
 2. Install dependencies
